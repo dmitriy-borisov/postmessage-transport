@@ -54,7 +54,7 @@ export type Message<M extends PostMessageTransportMap, K extends keyof M> = Base
 
 export type Listener<T> = (data: T, resolve?: (value: T | PromiseLike<T>) => void, reject?: (reason?: any) => void) => void;
 
-export type PromiseListener<T, E> = [Listener<T>, Listener<E>];
+export type Awaiter<T, E> = [Listener<T>, Listener<E>];
 
 export interface Target {
   postMessage(message: any, ...args: any[]): void;

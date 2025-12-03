@@ -1,4 +1,4 @@
-import { Listener, Message, MessageType, Options, PostMessageTransportMap, PromiseListener, Target } from './typings';
+import { Listener, Message, MessageType, Options, PostMessageTransportMap, Awaiter, Target } from './typings';
 import { isPromisedMessage, getRandomId } from './utils';
 
 const DEFAULT_OPTIONS: Options<any, any> = {
@@ -11,7 +11,7 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
 
   private listeners: Partial<Record<keyof M, Listener<any>[]>> = {};
 
-  private awaiters: Map<string, PromiseListener<any, any>> = new Map();
+  private awaiters: Map<string, Awaiter<any, any>> = new Map();
 
   options: Options<M, any> = DEFAULT_OPTIONS;
 
@@ -36,9 +36,16 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
     };
   }
 
-  private messageListener = (e: MessageEvent<Message<M, any>>) => {
-    const decoded: Message<M, any> = this.options.decoder?.(e.data) ?? e.data;
+  public messageListener = (e: MessageEvent<Message<M, any>>) => {
+    try {
+      const decoded: Message<M, any> = this.options.decoder?.(e.data) ?? e.data;
+      this.messageListenerHandler(decoded);
+    } catch {
+      // If we can't decode the message, we just ignore it
+    }
+  }
 
+  private messageListenerHandler = (decoded: Message<M, any>) => {
     if (decoded.serviceName !== this.serviceName) {
       return;
     }
