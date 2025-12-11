@@ -16,6 +16,8 @@ export function isPromiseRejectMessage(message: Message<any, any>): message is P
   return 'requestId' in message && message.type === MessageType.REJECT;
 }
 
-export function isPromisedMessage(message: Message<any, any>): message is PromiseRequestMessage<any, any> | PromiseResponseMessage<any, any> | PromiseRejectMessage<any, any> {
+export function isPromisedMessage(
+  message: Message<any, any>
+): message is PromiseRequestMessage<any, any> | PromiseResponseMessage<any, any> | PromiseRejectMessage<any, any> {
   return isPromiseRequestMessage(message) || isPromiseResponseMessage(message) || isPromiseRejectMessage(message);
 }

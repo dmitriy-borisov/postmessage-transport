@@ -66,7 +66,10 @@ export type PromiseRequestMessage<M extends PostMessageTransportMap, K extends k
   data: M[K]['request'];
 };
 
-export type PromiseResponseMessage<M extends PostMessageTransportMap, K extends keyof AwaitedMessagesTransportMap<M>> = BaseMessage<M, K> & {
+export type PromiseResponseMessage<M extends PostMessageTransportMap, K extends keyof AwaitedMessagesTransportMap<M>> = BaseMessage<
+  M,
+  K
+> & {
   requestId: string;
   type: MessageType.RESPONSE;
   data: M[K]['response'];
@@ -78,11 +81,17 @@ export type PromiseRejectMessage<M extends PostMessageTransportMap, K extends ke
   data: M[K]['error'];
 };
 
-export type Message<M extends PostMessageTransportMap, K extends keyof M> = K extends keyof AwaitedMessagesTransportMap<M> ? PromiseRequestMessage<M, K> | PromiseResponseMessage<M, K> | PromiseRejectMessage<M, K> : BaseMessage<M, K>;
+export type Message<M extends PostMessageTransportMap, K extends keyof M> = K extends keyof AwaitedMessagesTransportMap<M>
+  ? PromiseRequestMessage<M, K> | PromiseResponseMessage<M, K> | PromiseRejectMessage<M, K>
+  : BaseMessage<M, K>;
 
 export type BaseListener<T> = (data: T) => void;
 
-export type AwaitedListener<T extends AwaitedMessage<any, any, any>> = (data: T['request'], resolve: (value: T['response']) => void, reject: (reason: T['error']) => void) => void;
+export type AwaitedListener<T extends AwaitedMessage<any, any, any>> = (
+  data: T['request'],
+  resolve: (value: T['response']) => void,
+  reject: (reason: T['error']) => void
+) => void;
 
 export type Listener<T> = BaseListener<T>;
 
@@ -104,8 +113,8 @@ export type AwaitedMessage<REQ, RES, E = string> = {
 
 export type AwaitedMessagesTransportMap<M extends PostMessageTransportMap> = {
   [P in keyof M as M[P] extends AwaitedMessage<any, any, any> ? P : never]: M[P];
-}
+};
 
 export type OnlyBaseMessagesTransportMap<M extends PostMessageTransportMap> = {
   [P in keyof M as M[P] extends AwaitedMessage<any, any, any> ? never : P]: M[P];
-}
+};

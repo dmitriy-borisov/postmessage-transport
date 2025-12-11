@@ -1,4 +1,16 @@
-import type { Listener, Message, Options, PostMessageTransportMap, Awaiter, Target, AwaitedMessagesTransportMap, OnlyBaseMessagesTransportMap, BaseListener, AwaitedListener, RequestOptions } from './typings';
+import type {
+  Listener,
+  Message,
+  Options,
+  PostMessageTransportMap,
+  Awaiter,
+  Target,
+  AwaitedMessagesTransportMap,
+  OnlyBaseMessagesTransportMap,
+  BaseListener,
+  AwaitedListener,
+  RequestOptions,
+} from './typings';
 import { MessageType } from './typings';
 import { isPromisedMessage, getRandomId } from './utils';
 
@@ -15,6 +27,8 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
   private awaitedListeners: Partial<Record<keyof AwaitedMessagesTransportMap<M>, AwaitedListener<any>[]>> = {};
 
   private awaiters: Map<string, Awaiter<any, any>> = new Map();
+
+  private timeoutIds: Set<ReturnType<typeof setTimeout>> = new Set();
 
   options: Options<M, any> = DEFAULT_OPTIONS;
 
@@ -46,7 +60,7 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
     } catch {
       // If we can't decode the message, we just ignore it
     }
-  }
+  };
 
   private messageListenerHandler = (decoded: Message<M, keyof M>) => {
     if (decoded.serviceName !== this.serviceName) {
@@ -85,9 +99,28 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
   }
 
   private postMessage<T extends keyof OnlyBaseMessagesTransportMap<M>>(message: T, data: M[T], type: MessageType): void;
-  private postMessage<T extends keyof AwaitedMessagesTransportMap<M>>(message: T, data: AwaitedMessagesTransportMap<M>[T]['request'], type: MessageType.REQUEST, requestId: string): void;
-  private postMessage<T extends keyof AwaitedMessagesTransportMap<M>>(message: T, data: M[T]['response'], type: MessageType.RESPONSE, requestId: string): void;
-  private postMessage<T extends keyof AwaitedMessagesTransportMap<M>>(message: T, data: M[T]['error'], type: MessageType.REJECT, requestId: string): void;
+
+  private postMessage<T extends keyof AwaitedMessagesTransportMap<M>>(
+    message: T,
+    data: AwaitedMessagesTransportMap<M>[T]['request'],
+    type: MessageType.REQUEST,
+    requestId: string
+  ): void;
+
+  private postMessage<T extends keyof AwaitedMessagesTransportMap<M>>(
+    message: T,
+    data: M[T]['response'],
+    type: MessageType.RESPONSE,
+    requestId: string
+  ): void;
+
+  private postMessage<T extends keyof AwaitedMessagesTransportMap<M>>(
+    message: T,
+    data: M[T]['error'],
+    type: MessageType.REJECT,
+    requestId: string
+  ): void;
+
   private postMessage<T extends keyof M>(message: T, data: any, type: MessageType, requestId?: string): void {
     if (!this.target) {
       throw new Error('Target is not set. You should call setTarget method before using this transport');
@@ -110,6 +143,8 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
       globalThis.removeEventListener('message', this.messageListener);
     }
 
+    this.timeoutIds.forEach(id => clearTimeout(id));
+    this.timeoutIds.clear();
     this.awaiters.forEach(([, , abortController]) => abortController.abort());
     this.awaiters.clear();
     this.baseListeners = {};
@@ -164,30 +199,47 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
     this.on(message, handler);
   }
 
-  request<T extends keyof AwaitedMessagesTransportMap<M>>(message: T, data: M[T]['request'], { signal, timeout = this.options.timeout }: RequestOptions = {}): Promise<M[T]['response']> {
+  request<T extends keyof AwaitedMessagesTransportMap<M>>(
+    message: T,
+    data: M[T]['request'],
+    { signal, timeout = this.options.timeout }: RequestOptions = {}
+  ): Promise<M[T]['response']> {
     const abortController = new AbortController();
     return new Promise((resolve, reject) => {
       const id = getRandomId();
-      const timeoutId = typeof this.options.timeout === 'number' ? setTimeout(() => {
-        this.awaiters.delete(id);
-        reject(new Error('Request timeout'));
-      }, timeout) : null;
+      const timeoutId =
+        typeof this.options.timeout === 'number'
+          ? setTimeout(() => {
+              this.awaiters.delete(id);
+              reject(new Error('Request timeout'));
+            }, timeout)
+          : null;
+
+      if (timeoutId) {
+        this.timeoutIds.add(timeoutId);
+      }
 
       const resolver = (data: unknown) => {
         this.awaiters.delete(id);
-        timeoutId && clearTimeout(timeoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
         resolve(data);
-      }
+      };
 
       const rejector = (data: unknown) => {
         this.awaiters.delete(id);
-        timeoutId && clearTimeout(timeoutId);
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
         reject(data);
-      }
+      };
 
-      [abortController.signal, signal].forEach(signal => signal?.addEventListener('abort', () => {
-        rejector(new Error('Request aborted'));
-      }));
+      [abortController.signal, signal].forEach(signal =>
+        signal?.addEventListener('abort', () => {
+          rejector(new Error('Request aborted'));
+        })
+      );
 
       this.awaiters.set(id, [resolver, rejector, abortController]);
       this.postMessage(message, data, MessageType.REQUEST, id);
