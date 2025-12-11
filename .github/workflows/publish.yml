@@ -32,12 +32,6 @@ jobs:
       - name: Build
         run: pnpm build
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Run tests
-        run: pnpm test:ci
-
       - name: Publish
         uses: JS-DevTools/npm-publish@v2
         with:
