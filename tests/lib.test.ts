@@ -1,10 +1,6 @@
-import { describe, vi, it as _it, expect, beforeEach } from 'vitest';
+import { describe, vi, it as _it, expect } from 'vitest';
 import { PostMessageTransport } from '../src/lib';
 import { MyTransportMethods } from './lib.typings';
-import { wait } from './utils';
-
-// Mock globalThis
-
 
 describe('Browser Emitter', () => {
   const postMessage = vi.spyOn(globalThis, 'postMessage');
@@ -12,7 +8,6 @@ describe('Browser Emitter', () => {
 
   const it = _it.extend<{ transport: PostMessageTransport<MyTransportMethods>, targetTransport: PostMessageTransport<MyTransportMethods> }>({
     transport: async ({ }, use) => {
-      console.log('create transport');
       const transport = new PostMessageTransport<MyTransportMethods>('my-service-1', {
         target: globalThis,
         isBrowser: true,
