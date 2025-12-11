@@ -46,16 +46,50 @@ export interface BaseMessage<M extends PostMessageTransportMap, K extends keyof 
   type: MessageType;
 }
 
-export type PromisedMessage<M extends PostMessageTransportMap, K extends keyof M> = BaseMessage<M, K> & {
+export type PromiseRequestMessage<M extends PostMessageTransportMap, K extends keyof AwaitedMessagesTransportMap<M>> = BaseMessage<M, K> & {
   requestId: string;
+  type: MessageType.REQUEST;
+  data: M[K]['request'];
 };
 
-export type Message<M extends PostMessageTransportMap, K extends keyof M> = BaseMessage<M, K> | PromisedMessage<M, K>;
+export type PromiseResponseMessage<M extends PostMessageTransportMap, K extends keyof AwaitedMessagesTransportMap<M>> = BaseMessage<M, K> & {
+  requestId: string;
+  type: MessageType.RESPONSE;
+  data: M[K]['response'];
+};
 
-export type Listener<T> = (data: T, resolve?: (value: T | PromiseLike<T>) => void, reject?: (reason?: any) => void) => void;
+export type PromiseRejectMessage<M extends PostMessageTransportMap, K extends keyof AwaitedMessagesTransportMap<M>> = BaseMessage<M, K> & {
+  requestId: string;
+  type: MessageType.REJECT;
+  data: M[K]['error'];
+};
 
-export type Awaiter<T, E> = [Listener<T>, Listener<E>];
+export type Message<M extends PostMessageTransportMap, K extends keyof M> = K extends keyof AwaitedMessagesTransportMap<M> ? PromiseRequestMessage<M, K> | PromiseResponseMessage<M, K> | PromiseRejectMessage<M, K> : BaseMessage<M, K>;
+
+export type BaseListener<T> = (data: T) => void;
+
+export type AwaitedListener<T extends AwaitedMessage<any, any, any>> = (data: T['request'], resolve: (value: T['response']) => void, reject: (reason: T['error']) => void) => void;
+
+export type Listener<T> = BaseListener<T>;
+
+export type Awaiter<T, E> = [(data: T) => void, (reason: E) => void, AbortController];
 
 export interface Target {
   postMessage(message: any, ...args: any[]): void;
+}
+
+// Utility types
+export type AwaitedMessage<REQ, RES, E = string> = {
+  __type: 'awaitedMessage';
+  request: REQ;
+  response: RES;
+  error: E;
+};
+
+export type AwaitedMessagesTransportMap<M extends PostMessageTransportMap> = {
+  [P in keyof M as M[P] extends AwaitedMessage<any, any, any> ? P : never]: M[P];
+}
+
+export type OnlyBaseMessagesTransportMap<M extends PostMessageTransportMap> = {
+  [P in keyof M as M[P] extends AwaitedMessage<any, any, any> ? never : P]: M[P];
 }
