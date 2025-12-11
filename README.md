@@ -93,8 +93,6 @@ transport.addHandler('requestData', (data, resolve, reject) => {
 });
 ```
 
-```
-
 ## ⚠️ Error Handling
 
 ### Timeout
@@ -157,58 +155,55 @@ export interface PostMessageTransportOptions<M extends PostMessageTransportMap, 
    */
   timeout?: number;
 }
+
+export interface PostMessageTransportRequestOptions {
+  /**
+   * Timeout in milliseconds for requests.
+   */
+  timeout?: number;
+  /**
+   * Abort signal for requests.
+   */
+  signal?: AbortSignal;
+}
 ```
 
 ## 📚 API
 
 ### `PostMessageTransport`
 
-#### `constructor(serviceName: string, options?: PostMessageTransportOptions)`
+#### Constructor
+
+```ts
+constructor(serviceName: string, options?: PostMessageTransportOptions)
+```
 
 Creates a new transport instance.
 
 - `serviceName`: Unique name for the service. Messages with other service names will be ignored.
 - `options`: Transport options.
 
-#### `emit(message: string, data: any)`
+#### Sending Messages
 
-Sends a one-way message to the target.
+| Method | Description |
+| --- | --- |
+| `emit(message, data)` | Sends a one-way message to the target. |
+| `request(message, data, options?)` | Sends a request to the target and waits for a response. |
 
-#### `on(message: string, callback: (data: any) => void)`
+#### Listening for Messages
 
-Listens for a one-way message.
+| Method | Description |
+| --- | --- |
+| `on(message, callback)` | Listens for a one-way message. |
+| `once(message, callback)` | Listens for a one-way message once. |
+| `off(message, callback)` | Removes a listener for a one-way message. |
+| `addHandler(message, callback)` | Registers a handler for a request. |
+| `addOnceHandler(message, callback)` | Registers a handler for a request once. |
+| `removeHandler(message, callback)` | Removes a handler for a request. |
 
-#### `off(message: string, callback: (data: any) => void)`
+#### Other
 
-Removes a listener for a one-way message.
-
-#### `once(message: string, callback: (data: any) => void)`
-
-Listens for a one-way message once.
-
-#### `request(message: string, data: any, options?: PostMessageTransportRequestOptions)`
-
-Sends a request to the target and waits for a response.
-
-- `options.timeout`: Timeout in milliseconds.
-- `options.signal`: AbortSignal to cancel the request.
-
-#### `addHandler(message: string, callback: (data: any, resolve: Function, reject: Function) => void)`
-
-Registers a handler for a request.
-
-#### `removeHandler(message: string, callback: Function)`
-
-Removes a handler for a request.
-
-#### `addOnceHandler(message: string, callback: Function)`
-
-Registers a handler for a request once.
-
-#### `setTarget(target: Target)`
-
-Sets the target for postMessage. Useful if the target is not available during initialization.
-
-#### `destroy()`
-
-Removes all listeners and clears all pending requests.
+| Method | Description |
+| --- | --- |
+| `setTarget(target)` | Sets the target for postMessage. Useful if the target is not available during initialization. |
+| `destroy()` | Removes all listeners and clears all pending requests. |
