@@ -5,7 +5,8 @@ on:
     tags: v*
 
 jobs:
-  lint_and_test:
+  publish:
+    if: github.repository == 'dmitriy-borisov/postmessage-transport'
     runs-on: ubuntu-latest
     name: Publish
     steps:
@@ -24,7 +25,9 @@ jobs:
           node-version: 20
           cache: 'pnpm'
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile --prefer-offline
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
 
       - name: Build
         run: pnpm build

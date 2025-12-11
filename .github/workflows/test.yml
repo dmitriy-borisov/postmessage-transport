@@ -7,12 +7,15 @@ on:
       - main
       - dev
 
+env:
+  PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/.cache/ms-playwright
+
 jobs:
   lint_and_test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ['14', '16', '18']
+        node: ['18', '20', '22']
     name: Test on NodeJS ${{matrix.node}}
     steps:
       - name: Checkout
@@ -27,7 +30,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'pnpm'
 
       - name: Install dependencies
