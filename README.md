@@ -129,7 +129,7 @@ try {
 ## ⚙️ Options
 
 ```ts
-export interface Options<M extends PostMessageTransportMap, K extends keyof M> {
+export interface PostMessageTransportOptions<M extends PostMessageTransportMap, K extends keyof M> {
   /**
    * Whether the transport is running in a browser environment.
    * If true, it will automatically set up message listeners on the window.
@@ -163,7 +163,7 @@ export interface Options<M extends PostMessageTransportMap, K extends keyof M> {
 
 ### `PostMessageTransport`
 
-#### `constructor(serviceName: string, options?: Options)`
+#### `constructor(serviceName: string, options?: PostMessageTransportOptions)`
 
 Creates a new transport instance.
 
@@ -186,7 +186,7 @@ Removes a listener for a one-way message.
 
 Listens for a one-way message once.
 
-#### `request(message: string, data: any, options?: RequestOptions)`
+#### `request(message: string, data: any, options?: PostMessageTransportRequestOptions)`
 
 Sends a request to the target and waits for a response.
 

@@ -1,7 +1,7 @@
 import type {
   Listener,
   Message,
-  Options,
+  PostMessageTransportOptions,
   PostMessageTransportMap,
   Awaiter,
   Target,
@@ -9,12 +9,12 @@ import type {
   OnlyBaseMessagesTransportMap,
   BaseListener,
   AwaitedListener,
-  RequestOptions,
+  PostMessageTransportRequestOptions,
 } from './typings';
 import { MessageType } from './typings';
 import { isPromisedMessage, getRandomId } from './utils';
 
-const DEFAULT_OPTIONS: Options<any, any> = {
+const DEFAULT_OPTIONS: PostMessageTransportOptions<any, any> = {
   isBrowser: typeof window !== 'undefined',
   targetOrigin: '*',
 };
@@ -30,11 +30,11 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
 
   private timeoutIds: Set<ReturnType<typeof setTimeout>> = new Set();
 
-  options: Options<M, any> = DEFAULT_OPTIONS;
+  options: PostMessageTransportOptions<M, any> = DEFAULT_OPTIONS;
 
   constructor(
     public serviceName: string,
-    options: Partial<Options<M, any>> = {}
+    options: Partial<PostMessageTransportOptions<M, any>> = {}
   ) {
     this.options = Object.assign({}, DEFAULT_OPTIONS, options);
     if (this.options.target) {
@@ -206,7 +206,7 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
   request<T extends keyof AwaitedMessagesTransportMap<M>>(
     message: T,
     data: M[T]['request'],
-    { signal, timeout = this.options.timeout }: RequestOptions = {}
+    { signal, timeout = this.options.timeout }: PostMessageTransportRequestOptions = {}
   ): Promise<M[T]['response']> {
     const abortController = new AbortController();
     return new Promise((resolve, reject) => {
@@ -214,9 +214,9 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
       const timeoutId =
         typeof timeout === 'number'
           ? setTimeout(() => {
-              this.awaiters.delete(id);
-              reject(new Error('Request timeout'));
-            }, timeout)
+            this.awaiters.delete(id);
+            reject(new Error('Request timeout'));
+          }, timeout)
           : null;
 
       if (timeoutId) {

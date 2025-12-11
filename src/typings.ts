@@ -3,7 +3,7 @@ export type PostMessageTransportMap = Record<any, any>;
 /**
  * Options for the PostMessageTransport.
  */
-export interface Options<M extends PostMessageTransportMap, K extends keyof M> {
+export interface PostMessageTransportOptions<M extends PostMessageTransportMap, K extends keyof M> {
   /**
    * Whether the transport is running in a browser environment.
    * If true, it will automatically set up message listeners on the window.
@@ -35,7 +35,7 @@ export interface Options<M extends PostMessageTransportMap, K extends keyof M> {
 /**
  * Options for the request.
  */
-export interface RequestOptions {
+export interface PostMessageTransportRequestOptions {
   /**
    * Timeout in milliseconds for requests.
    */
