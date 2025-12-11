@@ -164,7 +164,9 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
   }
 
   removeHandler<T extends keyof AwaitedMessagesTransportMap<M>>(message: T, callback: AwaitedListener<M[T]>) {
-    this.awaitedListeners[message]?.filter(cb => cb !== callback);
+    if (this.awaitedListeners[message]) {
+      this.awaitedListeners[message] = this.awaitedListeners[message].filter(cb => cb !== callback);
+    }
   }
 
   addOnceHandler<T extends keyof AwaitedMessagesTransportMap<M>>(message: T, callback: AwaitedListener<M[T]>) {
@@ -188,7 +190,9 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
   }
 
   off<T extends keyof OnlyBaseMessagesTransportMap<M>>(message: T, callback: Listener<M[T]>) {
-    this.baseListeners[message]?.filter(cb => cb !== callback);
+    if (this.baseListeners[message]) {
+      this.baseListeners[message] = this.baseListeners[message].filter(cb => cb !== callback);
+    }
   }
 
   once<T extends keyof OnlyBaseMessagesTransportMap<M>>(message: T, callback: Listener<M[T]>) {
@@ -208,11 +212,11 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
     return new Promise((resolve, reject) => {
       const id = getRandomId();
       const timeoutId =
-        typeof this.options.timeout === 'number'
+        typeof timeout === 'number'
           ? setTimeout(() => {
-              this.awaiters.delete(id);
-              reject(new Error('Request timeout'));
-            }, timeout)
+            this.awaiters.delete(id);
+            reject(new Error('Request timeout'));
+          }, timeout)
           : null;
 
       if (timeoutId) {

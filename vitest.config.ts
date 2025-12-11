@@ -9,6 +9,7 @@ export default defineConfig({
       instances: [{ browser: 'chromium' }],
       enabled: true,
       headless: true,
+      screenshotFailures: false,
     },
   },
 });

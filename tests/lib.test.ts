@@ -25,18 +25,18 @@ describe('Browser Emitter', () => {
     }
   });
 
-  it('Should has valid serviceName', ({ transport }) => {
+  it('Should have valid serviceName', ({ transport }) => {
     expect(transport.serviceName).toBe('my-service-1');
   });
 
-  it('Should throw error if target is not set', () => {
+  it('Should throw error when target is missing', () => {
     const transport = new PostMessageTransport<MyTransportMethods>('my-service-1', {
       isBrowser: true,
     });
     expect(() => transport.emit('test', true)).toThrow();
   });
 
-  it('Should call postMessage', ({ transport }) => {
+  it('Should call postMessage when emitting event', ({ transport }) => {
     transport.emit('test', true);
     expect(postMessage).toHaveBeenCalledWith({
       serviceName: 'my-service-1',
@@ -46,11 +46,11 @@ describe('Browser Emitter', () => {
     }, '*');
   });
 
-  it('Should add event listener', () => {
+  it('Should add message event listener on initialization', () => {
     expect(mockAddEventListener).toHaveBeenCalledWith('message', expect.any(Function));
   });
 
-  it('Should receive message', async ({ transport, targetTransport }) => {
+  it('Should receive one-way message', async ({ transport, targetTransport }) => {
     const callback = vi.fn();
     targetTransport.on('test', callback);
     transport.emit('test', true);
@@ -59,7 +59,7 @@ describe('Browser Emitter', () => {
     });
   });
 
-  it('Should receive awaited message', async ({ transport, targetTransport }) => {
+  it('Should handle request/response flow', async ({ transport, targetTransport }) => {
     const callback = vi.fn();
     targetTransport.addHandler('requestData', callback);
     transport.request('requestData', { data: 'test' }).catch(() => { });
@@ -68,10 +68,92 @@ describe('Browser Emitter', () => {
     });
   });
 
-  it('Should receive resolved awaited message', async ({ transport, targetTransport }) => {
+  it('Should resolve awaited request', async ({ transport, targetTransport }) => {
     const callback = vi.fn((_, resolve) => resolve({ ok: true }));
     targetTransport.addHandler('requestData', callback);
     const res = await transport.request('requestData', { data: 'test' });
     expect(res).toEqual({ ok: true });
+  });
+
+  it('Should remove event listener', async ({ transport, targetTransport }) => {
+    const callback = vi.fn();
+    targetTransport.on('test', callback);
+    targetTransport.off('test', callback);
+    transport.emit('test', true);
+
+    // Wait a bit to ensure it didn't fire
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('Should handle once listener', async ({ transport, targetTransport }) => {
+    const callback = vi.fn();
+    targetTransport.once('test', callback);
+
+    transport.emit('test', true);
+    await vi.waitFor(() => expect(callback).toHaveBeenCalledTimes(1));
+
+    transport.emit('test', true);
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('Should remove request handler', async ({ transport, targetTransport }) => {
+    const callback = vi.fn();
+    targetTransport.addHandler('requestData', callback);
+    targetTransport.removeHandler('requestData', callback);
+
+    // The request should timeout because there is no handler
+    await expect(transport.request('requestData', { data: 'test' }, { timeout: 100 })).rejects.toThrow('Request timeout');
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it('Should handle once request handler', async ({ transport, targetTransport }) => {
+    const callback = vi.fn((_, resolve) => resolve({ ok: true }));
+    targetTransport.addOnceHandler('requestData', callback);
+
+    await transport.request('requestData', { data: 'test' });
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    // Second request should timeout
+    await expect(transport.request('requestData', { data: 'test' }, { timeout: 100 })).rejects.toThrow('Request timeout');
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it('Should timeout request', async ({ transport }) => {
+    await expect(transport.request('requestData', { data: 'test' }, { timeout: 50 })).rejects.toThrow('Request timeout');
+  });
+
+  it('Should abort request', async ({ transport }) => {
+    const controller = new AbortController();
+    const promise = transport.request('requestData', { data: 'test' }, { signal: controller.signal });
+    controller.abort();
+    await expect(promise).rejects.toThrow('Request aborted');
+  });
+
+  it('Should handle rejection from handler', async ({ transport, targetTransport }) => {
+    targetTransport.addHandler('requestData', (_, __, reject) => {
+      reject('Something went wrong');
+    });
+
+    await expect(transport.request('requestData', { data: 'test' })).rejects.toBe('Something went wrong');
+  });
+
+  it('Should ignore messages from other services', async ({ transport, targetTransport }) => {
+    const callback = vi.fn();
+    targetTransport.on('test', callback);
+
+    // Create a transport with a different service name
+    const otherTransport = new PostMessageTransport<MyTransportMethods>('other-service', {
+      target: globalThis,
+      isBrowser: true,
+    });
+
+    otherTransport.emit('test', true);
+
+    await new Promise(resolve => setTimeout(resolve, 50));
+    expect(callback).not.toHaveBeenCalled();
+
+    otherTransport.destroy();
   });
 });

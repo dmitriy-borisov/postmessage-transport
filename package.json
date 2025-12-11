@@ -1,7 +1,7 @@
 {
   "name": "postmessage-transport",
-  "version": "1.0.0-alpha.2",
-  "description": "async/await transport between tabs and iframes",
+  "version": "1.0.0-rc.1",
+  "description": "Strongly typed, promise-based PostMessage transport for communication between windows, iframes, and workers",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -16,9 +16,16 @@
     "postmessage",
     "transport",
     "emitter",
-    "messagechannel",
-    "broadcastchannel",
-    "synchronization"
+    "typescript",
+    "typed",
+    "promise",
+    "async",
+    "await",
+    "iframe",
+    "worker",
+    "window",
+    "cross-origin",
+    "communication"
   ],
   "files": [
     "dist"
