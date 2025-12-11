@@ -67,7 +67,7 @@ describe('Browser Emitter', () => {
   it('Should receive awaited message', async ({ transport, targetTransport }) => {
     const callback = vi.fn();
     targetTransport.addHandler('requestData', callback);
-    transport.request('requestData', { data: 'test' });
+    transport.request('requestData', { data: 'test' }).catch(() => { });
     await vi.waitFor(() => {
       expect(callback).toHaveBeenCalledWith({ data: 'test' }, expect.any(Function), expect.any(Function));
     });

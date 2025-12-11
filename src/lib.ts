@@ -1,4 +1,5 @@
-import { Listener, Message, MessageType, Options, PostMessageTransportMap, Awaiter, Target, AwaitedMessagesTransportMap, OnlyBaseMessagesTransportMap, BaseListener, AwaitedListener } from './typings';
+import type { Listener, Message, Options, PostMessageTransportMap, Awaiter, Target, AwaitedMessagesTransportMap, OnlyBaseMessagesTransportMap, BaseListener, AwaitedListener, RequestOptions } from './typings';
+import { MessageType } from './typings';
 import { isPromisedMessage, getRandomId } from './utils';
 
 const DEFAULT_OPTIONS: Options<any, any> = {
@@ -163,14 +164,14 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
     this.on(message, handler);
   }
 
-  request<T extends keyof AwaitedMessagesTransportMap<M>>(message: T, data: M[T]['request'], { signal }: { signal?: AbortSignal } = {}): Promise<M[T]['response']> {
+  request<T extends keyof AwaitedMessagesTransportMap<M>>(message: T, data: M[T]['request'], { signal, timeout = this.options.timeout }: RequestOptions = {}): Promise<M[T]['response']> {
     const abortController = new AbortController();
     return new Promise((resolve, reject) => {
       const id = getRandomId();
       const timeoutId = typeof this.options.timeout === 'number' ? setTimeout(() => {
         this.awaiters.delete(id);
         reject(new Error('Request timeout'));
-      }, this.options.timeout) : null;
+      }, timeout) : null;
 
       const resolver = (data: unknown) => {
         this.awaiters.delete(id);

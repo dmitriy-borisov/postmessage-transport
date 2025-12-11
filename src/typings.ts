@@ -32,6 +32,20 @@ export interface Options<M extends PostMessageTransportMap, K extends keyof M> {
   timeout?: number;
 }
 
+/**
+ * Options for the request.
+ */
+export interface RequestOptions {
+  /**
+   * Timeout in milliseconds for requests.
+   */
+  timeout?: number;
+  /**
+   * Abort signal for requests.
+   */
+  signal?: AbortSignal;
+}
+
 export enum MessageType {
   DEFAULT = 0,
   REQUEST = 1,
@@ -78,7 +92,9 @@ export interface Target {
   postMessage(message: any, ...args: any[]): void;
 }
 
+// ---------------------------------------
 // Utility types
+//
 export type AwaitedMessage<REQ, RES, E = string> = {
   __type: 'awaitedMessage';
   request: REQ;
