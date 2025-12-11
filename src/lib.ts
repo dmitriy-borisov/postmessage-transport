@@ -214,9 +214,9 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
       const timeoutId =
         typeof timeout === 'number'
           ? setTimeout(() => {
-            this.awaiters.delete(id);
-            reject(new Error('Request timeout'));
-          }, timeout)
+              this.awaiters.delete(id);
+              reject(new Error('Request timeout'));
+            }, timeout)
           : null;
 
       if (timeoutId) {
