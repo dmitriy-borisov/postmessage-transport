@@ -87,11 +87,7 @@ export type Message<M extends PostMessageTransportMap, K extends keyof M> = K ex
 
 export type BaseListener<T> = (data: T) => void;
 
-export type AwaitedListener<T extends AwaitedMessage<any, any, any>> = (
-  data: T['request'],
-  resolve: (value: T['response']) => void,
-  reject: (reason: T['error']) => void
-) => void;
+export type AwaitedListener<T extends AwaitedMessage<any, any, any>> = (data: T['request']) => Promise<T['response']>;
 
 export type Listener<T> = BaseListener<T>;
 

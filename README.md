@@ -87,9 +87,10 @@ transport.on('test', (data) => {
 });
 
 // Listen request and send response
-transport.addHandler('requestData', (data, resolve, reject) => {
+transport.addHandler('requestData', async (data) => {
   console.log(data); // { data: 'test' }
-  resolve({ ok: true });
+  return { ok: true };
+  // or throw new Error('Some error') to reject
 });
 ```
 

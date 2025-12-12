@@ -64,12 +64,12 @@ describe('Browser Emitter', () => {
     targetTransport.addHandler('requestData', callback);
     transport.request('requestData', { data: 'test' }).catch(() => { });
     await vi.waitFor(() => {
-      expect(callback).toHaveBeenCalledWith({ data: 'test' }, expect.any(Function), expect.any(Function));
+      expect(callback).toHaveBeenCalledWith({ data: 'test' });
     });
   });
 
   it('Should resolve awaited request', async ({ transport, targetTransport }) => {
-    const callback = vi.fn((_, resolve) => resolve({ ok: true }));
+    const callback = vi.fn(async () => ({ ok: true }));
     targetTransport.addHandler('requestData', callback);
     const res = await transport.request('requestData', { data: 'test' });
     expect(res).toEqual({ ok: true });
@@ -109,7 +109,7 @@ describe('Browser Emitter', () => {
   });
 
   it('Should handle once request handler', async ({ transport, targetTransport }) => {
-    const callback = vi.fn((_, resolve) => resolve({ ok: true }));
+    const callback = vi.fn(async () => ({ ok: true }));
     targetTransport.addOnceHandler('requestData', callback);
 
     await transport.request('requestData', { data: 'test' });
@@ -132,11 +132,11 @@ describe('Browser Emitter', () => {
   });
 
   it('Should handle rejection from handler', async ({ transport, targetTransport }) => {
-    targetTransport.addHandler('requestData', (_, __, reject) => {
-      reject('Something went wrong');
+    targetTransport.addHandler('requestData', () => {
+      throw new Error('Something went wrong');
     });
 
-    await expect(transport.request('requestData', { data: 'test' })).rejects.toBe('Something went wrong');
+    await expect(transport.request('requestData', { data: 'test' })).rejects.toThrow('Something went wrong');
   });
 
   it('Should ignore messages from other services', async ({ transport, targetTransport }) => {

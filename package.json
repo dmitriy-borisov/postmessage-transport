@@ -1,6 +1,6 @@
 {
   "name": "postmessage-transport",
-  "version": "1.0.0",
+  "version": "1.0.0-rc.2",
   "description": "Strongly typed, promise-based PostMessage transport for communication between windows, iframes, and workers",
   "license": "MIT",
   "repository": {

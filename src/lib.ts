@@ -46,13 +46,6 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
     }
   }
 
-  private createMessageResolver<K extends keyof AwaitedMessagesTransportMap<M>>(message: K, requestId: string) {
-    return {
-      resolver: (data: AwaitedMessagesTransportMap<M>[K]['response']) => this.postMessage(message, data, MessageType.RESPONSE, requestId),
-      rejector: (data: AwaitedMessagesTransportMap<M>[K]['error']) => this.postMessage(message, data, MessageType.REJECT, requestId),
-    };
-  }
-
   public messageListener = (e: MessageEvent<Message<M, keyof M>>) => {
     try {
       const decoded: Message<M, keyof M> = this.options.decoder?.(e.data) ?? e.data;
@@ -85,8 +78,14 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
         break;
 
       case MessageType.REQUEST:
-        const { resolver, rejector } = this.createMessageResolver(message, requestId);
-        this.awaitedListeners[message]?.forEach(callback => callback(data, resolver, rejector));
+        this.awaitedListeners[message]?.forEach(async callback => {
+          try {
+            const res = await callback(data);
+            this.postMessage(message, res, MessageType.RESPONSE, requestId);
+          } catch (error) {
+            this.postMessage(message, error instanceof Error ? error.message : JSON.stringify(error), MessageType.REJECT, requestId);
+          }
+        });
         break;
 
       default:
@@ -174,8 +173,8 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
       this.awaitedListeners[message] = [];
     }
 
-    const handler = (data: M[T]['request'], resolve: (data: M[T]['response']) => void, reject: (data: M[T]['error']) => void) => {
-      callback(data, resolve, reject);
+    const handler: AwaitedListener<M[T]> = async data => {
+      callback(data);
       this.removeHandler(message, handler);
     };
     this.awaitedListeners[message]?.push(handler);
