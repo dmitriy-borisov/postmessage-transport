@@ -97,6 +97,12 @@ export interface Target {
   postMessage(message: any, ...args: any[]): void;
 }
 
+export interface MessageEvent<T> {
+  data: T;
+}
+
+export type DataType<M extends PostMessageTransportMap, T> = T extends (...args: any[]) => any ? ReturnType<T> : Message<M, keyof M>;
+
 // ---------------------------------------
 // Utility types
 //

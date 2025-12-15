@@ -10,6 +10,8 @@ import type {
   BaseListener,
   AwaitedListener,
   PostMessageTransportRequestOptions,
+  MessageEvent,
+  DataType,
 } from './typings';
 import { MessageType } from './typings';
 import { isPromisedMessage, getRandomId } from './utils';
@@ -42,20 +44,20 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
     }
 
     if (this.options.isBrowser) {
-      globalThis.addEventListener('message', this.messageListener);
+      globalThis.addEventListener('message', this.handleMessage);
     }
   }
 
-  public messageListener = (e: MessageEvent<Message<M, keyof M>>) => {
+  public handleMessage = (e: MessageEvent<DataType<M, typeof this.options.encoder>>) => {
     try {
       const decoded: Message<M, keyof M> = this.options.decoder?.(e.data) ?? e.data;
-      this.messageListenerHandler(decoded);
+      this.handleDecodedMessage(decoded);
     } catch {
       // If we can't decode the message, we just ignore it
     }
   };
 
-  private messageListenerHandler = (decoded: Message<M, keyof M>) => {
+  private handleDecodedMessage = (decoded: Message<M, keyof M>) => {
     if (decoded.serviceName !== this.serviceName) {
       return;
     }
@@ -93,7 +95,7 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
     }
   };
 
-  setTarget(target: Target) {
+  setTarget<T extends Target>(target: T) {
     this.target = target;
   }
 
@@ -139,7 +141,7 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
 
   destroy() {
     if (this.options.isBrowser) {
-      globalThis.removeEventListener('message', this.messageListener);
+      globalThis.removeEventListener('message', this.handleMessage);
     }
 
     this.timeoutIds.forEach(id => clearTimeout(id));
@@ -213,9 +215,9 @@ export class PostMessageTransport<M extends PostMessageTransportMap> {
       const timeoutId =
         typeof timeout === 'number'
           ? setTimeout(() => {
-              this.awaiters.delete(id);
-              reject(new Error('Request timeout'));
-            }, timeout)
+            this.awaiters.delete(id);
+            reject(new Error('Request timeout'));
+          }, timeout)
           : null;
 
       if (timeoutId) {

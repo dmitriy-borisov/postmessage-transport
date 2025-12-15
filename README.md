@@ -208,3 +208,8 @@ Creates a new transport instance.
 | --- | --- |
 | `setTarget(target)` | Sets the target for postMessage. Useful if the target is not available during initialization. |
 | `destroy()` | Removes all listeners and clears all pending requests. |
+
+## 🤝 Contributing
+
+Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/dmitriy-borisov/postmessage-transport/issues). You can also take a look at the [contributing guide](CONTRIBUTING.md).
+
