@@ -156,4 +156,63 @@ describe('Browser Emitter', () => {
 
     otherTransport.destroy();
   });
+
+  it('Should check baseListeners count', async ({ transport, targetTransport }) => {
+    const callback = vi.fn();
+    targetTransport.on('test', callback);
+    expect((targetTransport as any).baseListeners['test']).toHaveLength(1);
+
+    targetTransport.off('test', callback);
+    expect((targetTransport as any).baseListeners['test']).toHaveLength(0);
+
+    targetTransport.once('test', callback);
+    expect((targetTransport as any).baseListeners['test']).toHaveLength(1);
+
+    transport.emit('test', true);
+    await vi.waitFor(() => expect(callback).toHaveBeenCalledTimes(1));
+    expect((targetTransport as any).baseListeners['test']).toHaveLength(0);
+  });
+
+  it('Should check awaitedListeners count', async ({ transport, targetTransport }) => {
+    const callback = vi.fn(async () => ({ ok: true }));
+
+    targetTransport.addHandler('requestData', callback);
+    expect((targetTransport as any).awaitedListeners['requestData']).toHaveLength(1);
+
+    targetTransport.removeHandler('requestData', callback);
+    expect((targetTransport as any).awaitedListeners['requestData']).toHaveLength(0);
+
+    targetTransport.addOnceHandler('requestData', callback);
+    expect((targetTransport as any).awaitedListeners['requestData']).toHaveLength(1);
+
+    await transport.request('requestData', { data: 'test' });
+    expect(callback).toHaveBeenCalledTimes(1);
+    expect((targetTransport as any).awaitedListeners['requestData']).toHaveLength(0);
+  });
+
+  it('Should check awaiters count', async ({ transport, targetTransport }) => {
+    const callback = vi.fn(async () => ({ ok: true }));
+    targetTransport.addHandler('requestData', callback);
+
+    expect((transport as any).awaiters.size).toBe(0);
+
+    const promise = transport.request('requestData', { data: 'test' });
+    expect((transport as any).awaiters.size).toBe(1);
+
+    await promise;
+    expect((transport as any).awaiters.size).toBe(0);
+
+    // Timeout case
+    targetTransport.removeHandler('requestData', callback);
+    await expect(transport.request('requestData', { data: 'test' }, { timeout: 10 })).rejects.toThrow();
+    expect((transport as any).awaiters.size).toBe(0);
+
+    // Abort case
+    const controller = new AbortController();
+    const abortPromise = transport.request('requestData', { data: 'test' }, { signal: controller.signal });
+    expect((transport as any).awaiters.size).toBe(1);
+    controller.abort();
+    await expect(abortPromise).rejects.toThrow();
+    expect((transport as any).awaiters.size).toBe(0);
+  });
 });

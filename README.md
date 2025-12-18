@@ -9,13 +9,14 @@ Typed transport for PostMessage protocol. Also it supports the async/await betwe
 
 ## 📖 Table of Contents
 
-- [Motivation](#-motivation)
-- [Install](#-install)
-- [Usage](#-usage)
-- [Error Handling](#-error-handling)
-- [Options](#-options)
-- [API](#-api)
+- [Motivation](#motivation)
+- [Install](#install)
+- [Usage](#usage)
+- [Error Handling](#error-handling)
+- [Options](#options)
+- [API](#api)
 
+<a name="motivation"></a>
 ## ❓ Motivation
 
 The `postMessage` API is a powerful tool for communication between windows, iframes, and workers. However, it has some limitations:
@@ -30,6 +31,7 @@ The `postMessage` API is a powerful tool for communication between windows, ifra
 - **Async/Await support**: Send a request and await the response just like a regular HTTP request.
 - **Reliability**: Built-in error handling and timeout support.
 
+<a name="install"></a>
 ## 📦 Install
 
 ```bash
@@ -43,6 +45,7 @@ yarn add postmessage-transport
 pnpm add postmessage-transport
 ```
 
+<a name="usage"></a>
 ## 🚀 Usage
 
 ### Define your types
@@ -94,6 +97,7 @@ transport.addHandler('requestData', async (data) => {
 });
 ```
 
+<a name="error-handling"></a>
 ## ⚠️ Error Handling
 
 ### Timeout
@@ -125,6 +129,7 @@ try {
 }
 ```
 
+<a name="options"></a>
 ## ⚙️ Options
 
 ```ts
@@ -169,6 +174,7 @@ export interface PostMessageTransportRequestOptions {
 }
 ```
 
+<a name="api"></a>
 ## 📚 API
 
 ### `PostMessageTransport`
